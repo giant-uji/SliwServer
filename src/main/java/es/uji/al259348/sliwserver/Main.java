@@ -1,11 +1,15 @@
 package es.uji.al259348.sliwserver;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.uji.al259348.sliwserver.model.Location;
+import es.uji.al259348.sliwserver.model.User;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import rx.Observable;
+import rx.schedulers.Schedulers;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -15,6 +19,8 @@ public class Main {
     private static final String BROKER_USER = "admin";
     private static final String BROKER_PASSWORD = "password";
     private static final String BROKER_CLIENT_ID = "SliwServer";
+
+    private static final String SMARTWATCH_MAC_ADDRESS = "44:d4:e0:fe:f5:3f";
 
     private static final int MSG_QOS = 2;
 
@@ -64,8 +70,14 @@ public class Main {
                 mqttClient.connect(mqttConnectOptions);
                 System.out.println("Connected!");
 
-                System.out.println("Subscribing to topic: user/linkedTo/a:b:c:d/request");
-                mqttClient.subscribe("user/linkedTo/a:b:c:d:e/request");
+                System.out.println("Subscribing to topic: user/linkedTo/+/request");
+                mqttClient.subscribe("user/linkedTo/+/request");
+
+                System.out.println("Subscribing to topic: user/+/configure");
+                mqttClient.subscribe("user/+/configure");
+
+                System.out.println("Subscribing to topic: user/+/sample");
+                mqttClient.subscribe("user/+/sample");
 
                 while(running) {
                     try {
@@ -100,36 +112,54 @@ public class Main {
 
         @Override
         public void messageArrived(String topic, MqttMessage message) throws Exception {
-            System.out.println("Message arrived for topic (" + topic + "): ");
+            System.out.println("Message arrived from topic: " + topic);
 
             String msg = new String(message.getPayload());
             System.out.println(msg);
 
-            if (topic.equals("user/linkedTo/a:b:c:d:e/request")) {
-                String responseTopic = "user/linkedTo/a:b:c:d:e/response";
+            String[] topicFields = topic.split("/");
 
-                // Obtener usuario de la base de datos...
+            if (topicFields[0].equals("user")) {
 
-                MqttMessage responseMessage = new MqttMessage();
-                responseMessage.setPayload(new Date().toString().getBytes());
-                responseMessage.setQos(MSG_QOS);
-                responseMessage.setRetained(false);
+                if (topicFields[1].equals("linkedTo")) {
+                    String deviceId = topicFields[2];
+                    String responseTopic = "user/linkedTo/" + SMARTWATCH_MAC_ADDRESS + "/response";
 
-                MessageToPublish response = new MessageToPublish();
-                response.topic = responseTopic;
-                response.message = responseMessage;
+                    // Obtener usuario de la base de datos...
+                    User user = new User();
+                    user.setId("1");
+                    user.setName("adrian");
 
-                messageToPublishQueue.put(response);
+                    Location loc1 = new Location();
+                    loc1.setName("Cocina");
+                    loc1.setConfigMsg("Vete pa la cocina!");
+
+//                Location loc2 = new Location();
+//                loc2.setName("Baño");
+//                loc2.setConfigMsg("Vete pal baño");
+
+                    user.setLocations(Arrays.asList(loc1));
+
+                    String json = (new ObjectMapper()).writeValueAsString(user);
+
+                    MqttMessage responseMessage = new MqttMessage();
+                    responseMessage.setPayload(json.getBytes());
+                    responseMessage.setQos(MSG_QOS);
+                    responseMessage.setRetained(false);
+
+                    MessageToPublish response = new MessageToPublish();
+                    response.topic = responseTopic;
+                    response.message = responseMessage;
+
+                    messageToPublishQueue.put(response);
+
+                } else {
+                    String userId = topicFields[1];
+
+                    // configurar...
+                }
+
             }
-
-//        try {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            Sample sample = objectMapper.readValue(msg, Sample.class);
-//            System.out.println("sample = " + sample.toString());
-//        } catch (Exception e) {
-//            //e.printStackTrace();
-//            System.out.println(msg);
-//        }
 
         }
 
@@ -140,6 +170,8 @@ public class Main {
         System.out.println("SliwServer");
         System.out.println("Press <intro> at any moment to stop the server.");
         System.out.println("-----------------------------------------------");
+
+        //request().subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe();
 
         MqttClientThread t = new MqttClientThread(BROKER_HOST, BROKER_USER, BROKER_PASSWORD);
         t.start();
@@ -159,6 +191,55 @@ public class Main {
         }
 
         System.exit(0);
+    }
+
+    private static Observable<Void> connect() {
+        System.out.println("connect | Thread: " + Thread.currentThread().getName());
+        return Observable.create(subscriber -> {
+            System.out.println("connect | create | Thread: " + Thread.currentThread().getName());
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            subscriber.onCompleted();
+        });
+    }
+
+    private static Observable<Void> subscribe() {
+        System.out.println("subscribe | Thread: " + Thread.currentThread().getName());
+        return Observable.create(subscriber -> {
+            System.out.println("subscribe | create | Thread: " + Thread.currentThread().getName());
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            subscriber.onCompleted();
+        });
+    }
+
+    private static Observable<Void> publish() {
+        System.out.println("publish | Thread: " + Thread.currentThread().getName());
+        return Observable.create(subscriber -> {
+            System.out.println("publish | create | Thread: " + Thread.currentThread().getName());
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            subscriber.onCompleted();
+        });
+    }
+
+    private static Observable<String> request() {
+        System.out.println("request | Thread: " + Thread.currentThread().getName());
+        return Observable.create(subscriber -> {
+            System.out.println("request | create | Thread: " + Thread.currentThread().getName());
+            subscriber.onNext("all");
+            subscriber.onCompleted();
+            Observable.concat(connect(), subscribe(), publish()).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe();
+        });
     }
 
 }
