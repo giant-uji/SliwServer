@@ -1,9 +1,14 @@
 package es.uji.al259348.sliwserver.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+
 import java.util.List;
 
+@Document(indexName = "sliw", type = "user")
 public class User {
 
+    @Id
     private String id;
     private String name;
     private List<Location> locations;
