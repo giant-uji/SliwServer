@@ -11,6 +11,9 @@ import java.util.Arrays;
 @Service
 public class MessageServiceImpl implements MessageService {
 
+    private static final String SMARTWATCH_MAC_ADDRESS = "44:d4:e0:fe:f5:3f";
+    private static final int MSG_QOS = 2;
+
     @Override
     public void handleMessage(String topic, String msg) {
         System.out.println("Message received from topic: " + topic);
