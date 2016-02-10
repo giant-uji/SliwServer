@@ -29,6 +29,8 @@ public class MqttConfig {
     String username;
     @Value("${mqtt.password}")
     String password;
+    @Value("${mqtt.clientId}")
+    String clientId;
 
     @Bean
     public DefaultMqttPahoClientFactory clientFactory() {
@@ -46,9 +48,7 @@ public class MqttConfig {
 
     @Bean
     public MessageProducer inbound() {
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(
-                        "SliwServer",
-                        clientFactory());
+        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId,clientFactory());
 
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());

@@ -2,3 +2,4 @@ mqtt:
   uri: "tcp://0.0.0.0:61613"
   username: "admin"
   password: "password"
+  clientId: "SliwServer"
