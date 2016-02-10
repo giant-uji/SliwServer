@@ -3,17 +3,23 @@ package es.uji.al259348.sliwserver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.uji.al259348.sliwserver.model.Location;
 import es.uji.al259348.sliwserver.model.User;
+import es.uji.al259348.sliwserver.services.UserService;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import rx.Observable;
-import rx.schedulers.Schedulers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
-public class Main {
+@SpringBootApplication
+public class Main implements CommandLineRunner {
 
     private static final String BROKER_HOST = "tcp://0.0.0.0:61613";
     private static final String BROKER_USER = "admin";
@@ -23,6 +29,46 @@ public class Main {
     private static final String SMARTWATCH_MAC_ADDRESS = "44:d4:e0:fe:f5:3f";
 
     private static final int MSG_QOS = 2;
+
+    @Autowired
+    ApplicationContext applicationContext;
+
+    @Autowired
+    UserService userService;
+
+    public static void main(String args[]) {
+        SpringApplication.run(Main.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+
+        System.out.println("-----------------------------------------------");
+        System.out.println("SliwServer");
+        System.out.println("Press <intro> at any moment to stop the server.");
+        System.out.println("-----------------------------------------------");
+
+        //request().subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe();
+
+        MqttClientThread t = new MqttClientThread(BROKER_HOST, BROKER_USER, BROKER_PASSWORD);
+        //t.start();
+
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        t.finish();
+
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        SpringApplication.exit(applicationContext);
+    }
 
     private static class MessageToPublish {
         String topic;
@@ -63,6 +109,7 @@ public class Main {
         public void run() {
 
             try {
+
                 mqttClient = new MqttClient(brokerHost, BROKER_CLIENT_ID, new MemoryPersistence());
                 mqttClient.setCallback(this);
 
@@ -117,129 +164,103 @@ public class Main {
             String msg = new String(message.getPayload());
             System.out.println(msg);
 
-            String[] topicFields = topic.split("/");
-
-            if (topicFields[0].equals("user")) {
-
-                if (topicFields[1].equals("linkedTo")) {
-                    String deviceId = topicFields[2];
-                    String responseTopic = "user/linkedTo/" + SMARTWATCH_MAC_ADDRESS + "/response";
-
-                    // Obtener usuario de la base de datos...
-                    User user = new User();
-                    user.setId("1");
-                    user.setName("adrian");
-
-                    Location loc1 = new Location();
-                    loc1.setName("Cocina");
-                    loc1.setConfigMsg("Vete pa la cocina!");
-
-//                Location loc2 = new Location();
-//                loc2.setName("Baño");
-//                loc2.setConfigMsg("Vete pal baño");
-
-                    user.setLocations(Arrays.asList(loc1));
-
-                    String json = (new ObjectMapper()).writeValueAsString(user);
-
-                    MqttMessage responseMessage = new MqttMessage();
-                    responseMessage.setPayload(json.getBytes());
-                    responseMessage.setQos(MSG_QOS);
-                    responseMessage.setRetained(false);
-
-                    MessageToPublish response = new MessageToPublish();
-                    response.topic = responseTopic;
-                    response.message = responseMessage;
-
-                    messageToPublishQueue.put(response);
-
-                } else {
-                    String userId = topicFields[1];
-
-                    // configurar...
-                }
-
-            }
+//            String[] topicFields = topic.split("/");
+//
+//            if (topicFields[0].equals("user")) {
+//
+//                if (topicFields[1].equals("linkedTo")) {
+//                    String deviceId = topicFields[2];
+//                    String responseTopic = "user/linkedTo/" + SMARTWATCH_MAC_ADDRESS + "/response";
+//
+//
+//
+//                    // Obtener usuario de la base de datos...
+//                    User user = new User();
+//                    user.setId("1");
+//                    user.setName("adrian");
+//
+//                    Location loc1 = new Location();
+//                    loc1.setName("Cocina");
+//                    loc1.setConfigMsg("Vete pa la cocina!");
+//
+////                Location loc2 = new Location();
+////                loc2.setName("Baño");
+////                loc2.setConfigMsg("Vete pal baño");
+//
+//                    user.setLocations(Arrays.asList(loc1));
+//
+//                    String json = (new ObjectMapper()).writeValueAsString(user);
+//
+//                    MqttMessage responseMessage = new MqttMessage();
+//                    responseMessage.setPayload(json.getBytes());
+//                    responseMessage.setQos(MSG_QOS);
+//                    responseMessage.setRetained(false);
+//
+//                    MessageToPublish response = new MessageToPublish();
+//                    response.topic = responseTopic;
+//                    response.message = responseMessage;
+//
+//                    messageToPublishQueue.put(response);
+//
+//                } else {
+//                    String userId = topicFields[1];
+//
+//                    // configurar...
+//                }
+//
+//            }
 
         }
 
     }
 
-    public static void main(String args[]) {
-
-        System.out.println("SliwServer");
-        System.out.println("Press <intro> at any moment to stop the server.");
-        System.out.println("-----------------------------------------------");
-
-        //request().subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe();
-
-        MqttClientThread t = new MqttClientThread(BROKER_HOST, BROKER_USER, BROKER_PASSWORD);
-        t.start();
-
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        t.finish();
-
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        System.exit(0);
-    }
-
-    private static Observable<Void> connect() {
-        System.out.println("connect | Thread: " + Thread.currentThread().getName());
-        return Observable.create(subscriber -> {
-            System.out.println("connect | create | Thread: " + Thread.currentThread().getName());
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            subscriber.onCompleted();
-        });
-    }
-
-    private static Observable<Void> subscribe() {
-        System.out.println("subscribe | Thread: " + Thread.currentThread().getName());
-        return Observable.create(subscriber -> {
-            System.out.println("subscribe | create | Thread: " + Thread.currentThread().getName());
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            subscriber.onCompleted();
-        });
-    }
-
-    private static Observable<Void> publish() {
-        System.out.println("publish | Thread: " + Thread.currentThread().getName());
-        return Observable.create(subscriber -> {
-            System.out.println("publish | create | Thread: " + Thread.currentThread().getName());
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            subscriber.onCompleted();
-        });
-    }
-
-    private static Observable<String> request() {
-        System.out.println("request | Thread: " + Thread.currentThread().getName());
-        return Observable.create(subscriber -> {
-            System.out.println("request | create | Thread: " + Thread.currentThread().getName());
-            subscriber.onNext("all");
-            subscriber.onCompleted();
-            Observable.concat(connect(), subscribe(), publish()).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe();
-        });
-    }
+//    private static Observable<Void> connect() {
+//        System.out.println("connect | Thread: " + Thread.currentThread().getName());
+//        return Observable.create(subscriber -> {
+//            System.out.println("connect | create | Thread: " + Thread.currentThread().getName());
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            subscriber.onCompleted();
+//        });
+//    }
+//
+//    private static Observable<Void> subscribe() {
+//        System.out.println("subscribe | Thread: " + Thread.currentThread().getName());
+//        return Observable.create(subscriber -> {
+//            System.out.println("subscribe | create | Thread: " + Thread.currentThread().getName());
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            subscriber.onCompleted();
+//        });
+//    }
+//
+//    private static Observable<Void> publish() {
+//        System.out.println("publish | Thread: " + Thread.currentThread().getName());
+//        return Observable.create(subscriber -> {
+//            System.out.println("publish | create | Thread: " + Thread.currentThread().getName());
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            subscriber.onCompleted();
+//        });
+//    }
+//
+//    private static Observable<String> request() {
+//        System.out.println("request | Thread: " + Thread.currentThread().getName());
+//        return Observable.create(subscriber -> {
+//            System.out.println("request | create | Thread: " + Thread.currentThread().getName());
+//            subscriber.onNext("all");
+//            subscriber.onCompleted();
+//            Observable.concat(connect(), subscribe(), publish()).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe();
+//        });
+//    }
 
 }
