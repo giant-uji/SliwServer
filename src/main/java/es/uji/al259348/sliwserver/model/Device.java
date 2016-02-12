@@ -3,7 +3,7 @@ package es.uji.al259348.sliwserver.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
-@Document(indexName = "sliw", type = "device")
+@Document(indexName = "sliw", type = "devices")
 public class Device {
 
     @Id

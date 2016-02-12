@@ -2,10 +2,11 @@ package es.uji.al259348.sliwserver.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import weka.classifiers.Classifier;
 
 import java.util.List;
 
-@Document(indexName = "sliw", type = "user")
+@Document(indexName = "sliw", type = "users")
 public class User {
 
     @Id
@@ -13,6 +14,7 @@ public class User {
     private String name;
     private List<Location> locations;
     private boolean configured;
+    private List<Classifier> classifiers;
 
     public User() {
     }
@@ -49,6 +51,14 @@ public class User {
         this.configured = configured;
     }
 
+    public List<Classifier> getClassifiers() {
+        return classifiers;
+    }
+
+    public void setClassifiers(List<Classifier> classifiers) {
+        this.classifiers = classifiers;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -56,6 +66,7 @@ public class User {
                 ", name='" + name + '\'' +
                 ", locations=" + locations +
                 ", configured=" + configured +
+                ", classifiers=" + classifiers +
                 '}';
     }
 
