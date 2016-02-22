@@ -32,6 +32,7 @@ public class MLServiceImplTest {
     private static MLServiceImpl mlService;
 
     private static User user;
+    private static List<Sample> validSamples;
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -39,15 +40,15 @@ public class MLServiceImplTest {
         SampleRepository mockSampleRepository = mock(SampleRepository.class);
 
         mlService = new MLServiceImpl();
-        mlService.setSampleRepository(mockSampleRepository);
 
         List<Location> locations = Arrays.asList("Hab1", "Hab2", "Hab3", "Salón", "Baño", "Cocina", "Terraza").stream()
                 .map(Location::new).collect(Collectors.toList());
 
         user = new User();
         user.setLocations(locations);
+        user.setBssids(Arrays.asList("Casa", "Vecino1", "Vecino2", "Vecino3", "Vecino4", "Vecino5"));
 
-        List<Sample> validSamples = new ArrayList<>();
+        validSamples = new ArrayList<>();
         List<Sample.WifiScanResult> scanResults;
         Sample sample;
 
@@ -61,7 +62,7 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(0));
+        sample.setLocation(locations.get(0).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
@@ -76,7 +77,7 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(1));
+        sample.setLocation(locations.get(1).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
@@ -92,7 +93,7 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(2));
+        sample.setLocation(locations.get(2).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
@@ -108,7 +109,7 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(3));
+        sample.setLocation(locations.get(3).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
@@ -124,7 +125,7 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(4));
+        sample.setLocation(locations.get(4).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
@@ -140,7 +141,7 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(5));
+        sample.setLocation(locations.get(5).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
@@ -155,23 +156,36 @@ public class MLServiceImplTest {
         );
 
         sample = new Sample();
-        sample.setLocation(locations.get(6));
+        sample.setLocation(locations.get(6).getName());
         sample.setScanResults(scanResults);
 
         validSamples.add(sample);
 
-        when(mockSampleRepository.findByUserAndValid(user, true)).thenReturn(validSamples);
+        when(mockSampleRepository.findByUserIdAndValid(user.getId(), true)).thenReturn(validSamples);
 
     }
 
     @Test
     public void buildClassifiers() {
 
-        mlService.buildClassifiers(user);
+        List<Classifier> classifiers = mlService.buildClassifiers(user, validSamples);
+        assertFalse(classifiers.isEmpty());
 
-        assertFalse(user.getClassifiers().isEmpty());
+        user.setClassifiers(MLServiceImpl.toBase64(classifiers));
 
-        user.getClassifiers().forEach(classifier -> {
+        Sample sample = new Sample();
+        sample.setScanResults(Arrays.asList(
+                new Sample.WifiScanResult("Casa", "Casa", -42),
+                new Sample.WifiScanResult("Vecino2", "Vecino2", -12),
+                new Sample.WifiScanResult("Vecino3", "Vecino3", -12),
+                new Sample.WifiScanResult("Vecino4", "Vecino4", -40),
+                new Sample.WifiScanResult("Vecino5", "Vecino5", -72)
+        ));
+
+        String location = mlService.classify(user, sample);
+        assertEquals("Terraza", location);
+
+//        classifiers.forEach(classifier -> {
 
 //            // Hab1?
 //            Instance instance = new Instance(6);
@@ -210,25 +224,19 @@ public class MLServiceImplTest {
 //            instance.setValue(5, -53); // Vecino5
 
             // Terraza?
-            Instance instance = new Instance(6);
-            instance.setValue(0, -42); // Casa
-            instance.setValue(1, 0); // Vecino1
-            instance.setValue(2, -12); // Vecino2
-            instance.setValue(3, -12); // Vecino3
-            instance.setValue(4, -40); // Vecino4
-            instance.setValue(5, -72); // Vecino5
-            
-            try {
-                System.out.println(user.getLocations().get((int) classifier.classifyInstance(instance)));
 
-                double[] distribution = classifier.distributionForInstance(instance);
-                System.out.println(Arrays.toString(distribution));
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+//            try {
+//                System.out.println(user.getLocations().get((int) classifier.classifyInstance(sample)));
+//
+//                double[] distribution = classifier.distributionForInstance(instance);
+//                System.out.println(Arrays.toString(distribution));
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
 
-        });
+//        });
 
     }
 

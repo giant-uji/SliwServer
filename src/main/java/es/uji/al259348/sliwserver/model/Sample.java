@@ -39,9 +39,10 @@ public class Sample {
 
     @Id
     private String id;
-    private User user;
+    private String userId;
+    private String deviceId;
+    private String location;
     private Date date;
-    private Location location;
     private List<WifiScanResult> scanResults;
     private boolean valid;
 
@@ -59,12 +60,28 @@ public class Sample {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public Date getDate() {
@@ -73,14 +90,6 @@ public class Sample {
 
     public void setDate(Date date) {
         this.date = date;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
     }
 
     public List<WifiScanResult> getScanResults() {
@@ -103,9 +112,10 @@ public class Sample {
     public String toString() {
         return "Sample{" +
                 "id='" + id + '\'' +
-                ", user=" + user +
+                ", userId='" + userId + '\'' +
+                ", deviceId='" + deviceId + '\'' +
+                ", location='" + location + '\'' +
                 ", date=" + date +
-                ", location=" + location +
                 ", scanResults=" + scanResults +
                 ", valid=" + valid +
                 '}';

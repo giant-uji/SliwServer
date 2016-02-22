@@ -2,7 +2,6 @@ package es.uji.al259348.sliwserver.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
-import weka.classifiers.Classifier;
 
 import java.util.List;
 
@@ -14,7 +13,8 @@ public class User {
     private String name;
     private List<Location> locations;
     private boolean configured;
-    private List<Classifier> classifiers;
+    private List<String> bssids; // BSSIDs used in classifiers
+    private List<String> classifiers; // Classifiers in base64
 
     public User() {
     }
@@ -51,11 +51,19 @@ public class User {
         this.configured = configured;
     }
 
-    public List<Classifier> getClassifiers() {
+    public List<String> getBssids() {
+        return bssids;
+    }
+
+    public void setBssids(List<String> bssids) {
+        this.bssids = bssids;
+    }
+
+    public List<String> getClassifiers() {
         return classifiers;
     }
 
-    public void setClassifiers(List<Classifier> classifiers) {
+    public void setClassifiers(List<String> classifiers) {
         this.classifiers = classifiers;
     }
 
@@ -66,6 +74,7 @@ public class User {
                 ", name='" + name + '\'' +
                 ", locations=" + locations +
                 ", configured=" + configured +
+                ", bssids=" + bssids +
                 ", classifiers=" + classifiers +
                 '}';
     }

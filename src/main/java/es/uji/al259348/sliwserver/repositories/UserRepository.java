@@ -5,5 +5,5 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchCrudReposi
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends ElasticsearchCrudRepository<User, Integer> {
+public interface UserRepository extends ElasticsearchCrudRepository<User, String> {
 }

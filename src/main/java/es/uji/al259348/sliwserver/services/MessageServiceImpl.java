@@ -1,13 +1,18 @@
 package es.uji.al259348.sliwserver.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.uji.al259348.sliwserver.config.MqttConfig;
+import es.uji.al259348.sliwserver.model.Sample;
 import es.uji.al259348.sliwserver.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.List;
 
 @Service
 public class MessageServiceImpl implements MessageService {
@@ -19,6 +24,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SampleService sampleService;
 
     private static final String SMARTWATCH_MAC_ADDRESS = "44:d4:e0:fe:f5:3f";
     private static final int MSG_QOS = 2;
@@ -44,13 +52,34 @@ public class MessageServiceImpl implements MessageService {
                     String json = (new ObjectMapper()).writeValueAsString(user);
                     publish(responseTopic, json, MSG_QOS, true);
                 } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    logger.error("Error marshalling user: " + payload);
                 }
 
             } else {
-                String userId = topicFields[1];
+                String userId = "1";//topicFields[1];
+                logger.info("userId: " + userId);
+                User user = userService.getUser(userId);
+                logger.info("user: " + user);
 
-                // configurar...
+                if (user != null) {
+                    if (topicFields[2].equals("sample")) {
+                        try {
+                            Sample sample = (new ObjectMapper()).readValue(payload, Sample.class);
+                            sampleService.classify(sample);
+                            sampleService.save(sample);
+                        } catch (IOException e) {
+                            logger.error("Error unmarshalling sample: " + payload);
+                        }
+                    } else {
+                        try {
+                            List<Sample> samples = (new ObjectMapper()).readValue(payload, new TypeReference<List<Sample>>() {});
+                            userService.configure(user, samples);
+                        } catch (IOException e) {
+                            logger.error("Error unmarshalling samples: " + payload);
+                        }
+                    }
+                }
+
             }
 
         }
@@ -60,4 +89,5 @@ public class MessageServiceImpl implements MessageService {
     public void publish(String topic, String payload, int qos, boolean retained) {
         messageGateway.publish(topic, payload, qos, retained);
     }
+
 }
