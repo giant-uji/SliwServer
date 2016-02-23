@@ -1,5 +1,6 @@
 package es.uji.al259348.sliwserver.services;
 
+import es.uji.al259348.sliwserver.exceptions.NoSuchDeviceException;
 import es.uji.al259348.sliwserver.model.Device;
 import es.uji.al259348.sliwserver.model.Sample;
 import es.uji.al259348.sliwserver.model.User;
@@ -34,9 +35,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserLinkedTo(String deviceId) {
+    public User getUserLinkedTo(String deviceId) throws NoSuchDeviceException {
         Device device = deviceRepository.findOne(deviceId);
-        return (device != null) ? device.getUser() : null;
+
+        if (device == null)
+            throw new NoSuchDeviceException(deviceId);
+
+        return device.getUser();
     }
 
     @Override

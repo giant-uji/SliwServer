@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.uji.al259348.sliwserver.config.MqttConfig;
+import es.uji.al259348.sliwserver.exceptions.NoSuchDeviceException;
 import es.uji.al259348.sliwserver.model.Sample;
 import es.uji.al259348.sliwserver.model.User;
 import org.slf4j.Logger;
@@ -31,6 +32,8 @@ public class MessageServiceImpl implements MessageService {
     private static final String SMARTWATCH_MAC_ADDRESS = "44:d4:e0:fe:f5:3f";
     private static final int MSG_QOS = 2;
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public void handleMessage(String topic, String payload, int qos, boolean retained) {
         logger.info("Message received from topic (" + topic + "):");
@@ -42,21 +45,9 @@ public class MessageServiceImpl implements MessageService {
 
             if (topicFields[1].equals("linkedTo")) {
                 String deviceId = topicFields[2];
-                String responseTopic = "user/linkedTo/" + SMARTWATCH_MAC_ADDRESS + "/response";
-
-                // Obtener usuario de la base de datos...
-                User user = userService.getUserLinkedTo(SMARTWATCH_MAC_ADDRESS);
-                logger.info("User: " + user);
-
-                try {
-                    String json = (new ObjectMapper()).writeValueAsString(user);
-                    publish(responseTopic, json, MSG_QOS, true);
-                } catch (JsonProcessingException e) {
-                    logger.error("Error marshalling user: " + payload);
-                }
-
+                handleUserLinkedTo(deviceId);
             } else {
-                String userId = "1";//topicFields[1];
+                String userId = topicFields[1];
                 logger.info("userId: " + userId);
                 User user = userService.getUser(userId);
                 logger.info("user: " + user);
@@ -88,6 +79,30 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void publish(String topic, String payload, int qos, boolean retained) {
         messageGateway.publish(topic, payload, qos, retained);
+    }
+
+    public void handleUserLinkedTo(String deviceId) {
+        String responseTopic = "user/linkedTo/" + deviceId + "/response";
+        User user = null;
+        try {
+            user = userService.getUserLinkedTo(deviceId);
+            logger.info("User: " + user);
+
+            if (user == null) {
+                logger.info("El dispositivo {} no tiene usuario vinculado.", deviceId);
+                publish(responseTopic, "El dispositivo no tiene usuario vinculado.", MSG_QOS, false);
+            } else {
+                String json = objectMapper.writeValueAsString(user);
+                publish(responseTopic, json, MSG_QOS, true);
+            }
+
+        } catch (NoSuchDeviceException e) {
+            logger.info(e.getLocalizedMessage());
+            publish(responseTopic, "El dispositivo no ha sido dado de alta.", MSG_QOS, false);
+        } catch (JsonProcessingException e) {
+            logger.error("Error marshalling user: " + user);
+            publish(responseTopic, "El dispositivo no tiene usuario vinculado.", MSG_QOS, false);
+        }
     }
 
 }
