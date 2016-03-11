@@ -5,7 +5,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 
 import java.util.List;
 
-@Document(indexName = "sliw", type = "user")
+@Document(indexName = "sliw", type = "users")
 public class User {
 
     @Id
@@ -13,6 +13,8 @@ public class User {
     private String name;
     private List<Location> locations;
     private boolean configured;
+    private List<String> bssids; // BSSIDs used in classifiers
+    private List<String> classifiers; // Classifiers in base64
 
     public User() {
     }
@@ -49,6 +51,22 @@ public class User {
         this.configured = configured;
     }
 
+    public List<String> getBssids() {
+        return bssids;
+    }
+
+    public void setBssids(List<String> bssids) {
+        this.bssids = bssids;
+    }
+
+    public List<String> getClassifiers() {
+        return classifiers;
+    }
+
+    public void setClassifiers(List<String> classifiers) {
+        this.classifiers = classifiers;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -56,6 +74,8 @@ public class User {
                 ", name='" + name + '\'' +
                 ", locations=" + locations +
                 ", configured=" + configured +
+                ", bssids=" + bssids +
+                ", classifiers=" + classifiers +
                 '}';
     }
 
