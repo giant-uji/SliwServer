@@ -35,11 +35,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserLinkedTo(String deviceId) throws NoSuchDeviceException {
-        Device device = deviceRepository.findOne(deviceId);
+    public User getUserLinkedTo(String mac) throws NoSuchDeviceException {
+        Device device = deviceRepository.findOneByMac(mac);
 
         if (device == null)
-            throw new NoSuchDeviceException(deviceId);
+            throw new NoSuchDeviceException(mac);
 
         return device.getUser();
     }

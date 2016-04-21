@@ -9,7 +9,7 @@ import java.util.List;
 public interface UserService {
 
     User getUser(String id);
-    User getUserLinkedTo(String deviceId) throws NoSuchDeviceException;
+    User getUserLinkedTo(String mac) throws NoSuchDeviceException;
 
     void configure(User user, List<Sample> samples);
 }
