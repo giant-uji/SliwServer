@@ -3,6 +3,8 @@ package es.uji.al259348.sliwserver.config;
 import es.uji.al259348.sliwserver.services.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.IntegrationComponentScan;
@@ -11,6 +13,8 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
+import org.springframework.integration.mqtt.event.MqttConnectionFailedEvent;
+import org.springframework.integration.mqtt.event.MqttIntegrationEvent;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
@@ -19,6 +23,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Component;
 
 @Configuration
 @IntegrationComponentScan
@@ -94,6 +99,17 @@ public class MqttConfig {
     public interface MqttGateway {
 
         void publish(@Header(MqttHeaders.TOPIC) String topic, @Payload String payload, @Header(MqttHeaders.QOS) int qos, @Header(MqttHeaders.RETAINED) boolean retained);
+
+    }
+
+    @Component
+    public static class MqttEventListener implements ApplicationListener<MqttIntegrationEvent> {
+
+        @Override
+        public void onApplicationEvent(MqttIntegrationEvent event) {
+            if (event instanceof MqttConnectionFailedEvent)
+                System.err.println("MQTT Error: " + event.getCause().getMessage());
+        }
 
     }
 
