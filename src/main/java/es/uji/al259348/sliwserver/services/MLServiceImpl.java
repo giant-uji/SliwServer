@@ -1,5 +1,7 @@
 package es.uji.al259348.sliwserver.services;
 
+import es.uji.al259348.sliwserver.ml.TrainingSetBuilder;
+import es.uji.al259348.sliwserver.model.Location;
 import es.uji.al259348.sliwserver.model.Sample;
 import es.uji.al259348.sliwserver.model.User;
 import org.springframework.stereotype.Service;
@@ -7,7 +9,6 @@ import weka.classifiers.Classifier;
 import weka.classifiers.bayes.BayesNet;
 import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.functions.SMO;
-import weka.classifiers.functions.SimpleLinearRegression;
 import weka.classifiers.trees.J48;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
@@ -26,37 +27,28 @@ public class MLServiceImpl implements MLService {
     @Override
     public List<Classifier> buildClassifiers(User user, List<Sample> validSamples) {
 
-        // Create attributes
-        List<Attribute> attributes = user.getBssids().stream()
-                .map(Attribute::new)
-                .collect(Collectors.toList());
-
-        // Create class attribute
-        FastVector fvClassValues = new FastVector(user.getLocations().size());
-        user.getLocations().forEach(location -> fvClassValues.addElement(location.getName()));
-        Attribute classAttribute = new Attribute("Location", fvClassValues);
-
-        // Create training set
-        FastVector fvAttributes = new FastVector(attributes.size()+1);
-        attributes.forEach(fvAttributes::addElement);
-        fvAttributes.addElement(classAttribute);
-
-        Instances trainingSet = new Instances("TrainingSet", fvAttributes, validSamples.size());
-        trainingSet.setClassIndex(fvAttributes.size()-1);
+        Instances trainingSet = new TrainingSetBuilder()
+                .setAttributes(user.getBssids())
+                .setClassAttribute("Location", user.getLocations().stream()
+                        .map(Location::getName)
+                        .collect(Collectors.toList())
+                )
+                .build("TrainingSet", validSamples.size());
 
         // Create instances
         validSamples.forEach(sample -> {
             Map<String,Integer> BSSIDLevelMap = getBSSIDLevelMap(sample);
 
-            Instance instance = new Instance(fvAttributes.size());
+            Instance instance = new Instance(trainingSet.numAttributes());
 
-            attributes.forEach(attribute -> {
+            for (Enumeration e = trainingSet.enumerateAttributes(); e.hasMoreElements();) {
+                Attribute attribute = (Attribute) e.nextElement();
                 String bssid = attribute.name();
                 int level = (BSSIDLevelMap.containsKey(bssid)) ? BSSIDLevelMap.get(bssid) : 0;
                 instance.setValue(attribute, level);
-            });
+            }
 
-            instance.setValue(classAttribute, sample.getLocation());
+            instance.setValue(trainingSet.classAttribute(), sample.getLocation());
 
             instance.setDataset(trainingSet);
             trainingSet.add(instance);
@@ -70,37 +62,28 @@ public class MLServiceImpl implements MLService {
     @Override
     public String classify(User user, Sample sample) {
 
-        // Create attributes
-        List<Attribute> attributes = user.getBssids().stream()
-                .map(Attribute::new)
-                .collect(Collectors.toList());
-
-        // Create class attribute
-        FastVector fvClassValues = new FastVector(user.getLocations().size());
-        user.getLocations().forEach(location -> fvClassValues.addElement(location.getName()));
-        Attribute classAttribute = new Attribute("Location", fvClassValues);
-
-        // Create training set
-        FastVector fvAttributes = new FastVector(attributes.size()+1);
-        attributes.forEach(fvAttributes::addElement);
-        fvAttributes.addElement(classAttribute);
-
-        Instances trainingSet = new Instances("TrainingSet", fvAttributes, 1);
-        trainingSet.setClassIndex(fvAttributes.size()-1);
+        Instances trainingSet = new TrainingSetBuilder()
+                .setAttributes(user.getBssids())
+                .setClassAttribute("Location", user.getLocations().stream()
+                        .map(Location::getName)
+                        .collect(Collectors.toList())
+                )
+                .build("TrainingSet", 1);
 
         // Create instance
         Map<String,Integer> BSSIDLevelMap = getBSSIDLevelMap(sample);
 
-        Instance instance = new Instance(fvAttributes.size());
+        Instance instance = new Instance(trainingSet.numAttributes());
 
-        attributes.forEach(attribute -> {
+        for (Enumeration e = trainingSet.enumerateAttributes(); e.hasMoreElements();) {
+            Attribute attribute = (Attribute) e.nextElement();
             String bssid = attribute.name();
             int level = (BSSIDLevelMap.containsKey(bssid)) ? BSSIDLevelMap.get(bssid) : 0;
             instance.setValue(attribute, level);
-        });
+        }
 
         if (sample.getLocation() != null)
-            instance.setValue(classAttribute, sample.getLocation());
+            instance.setValue(trainingSet.classAttribute(), sample.getLocation());
 
         instance.setDataset(trainingSet);
         trainingSet.add(instance);
