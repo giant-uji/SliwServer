@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.uji.al259348.sliwserver.config.MqttConfig;
 import es.uji.al259348.sliwserver.exceptions.NoSuchDeviceException;
+import es.uji.al259348.sliwserver.model.Device;
 import es.uji.al259348.sliwserver.model.Sample;
 import es.uji.al259348.sliwserver.model.User;
 import org.slf4j.Logger;
@@ -24,6 +25,9 @@ public class MessageServiceImpl implements MessageService {
     MqttConfig.MqttGateway messageGateway;
 
     @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -40,6 +44,18 @@ public class MessageServiceImpl implements MessageService {
         logger.info(payload);
 
         String[] topicFields = topic.split("/");
+
+        if (topicFields[0].equals("devices")) {
+            if (topicFields[1].equals("register")) {
+                try {
+                    Device device = objectMapper.readValue(payload, Device.class);
+                    device = deviceService.save(device);
+                    publish("devices/register/response", "200 OK", MSG_QOS, false);
+                } catch (IOException e) {
+                    publish("devices/register/response", e.getLocalizedMessage(), MSG_QOS, false);
+                }
+            }
+        }
 
         if (topicFields[0].equals("user")) {
 

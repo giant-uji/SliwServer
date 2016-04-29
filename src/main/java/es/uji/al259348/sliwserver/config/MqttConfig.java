@@ -68,6 +68,7 @@ public class MqttConfig {
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);
         adapter.setOutputChannel(mqttInboundChannel());
+        adapter.addTopic("devices/register/request");
         adapter.addTopic("user/linkedTo/+/request");
         adapter.addTopic("user/+/configurar");
         adapter.addTopic("user/+/sample");
