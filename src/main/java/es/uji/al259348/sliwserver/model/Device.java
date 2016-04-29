@@ -8,7 +8,6 @@ public class Device {
 
     @Id
     private String id;
-    private String mac;
     private String name;
     private User user;
 
@@ -21,14 +20,6 @@ public class Device {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getMac() {
-        return mac;
-    }
-
-    public void setMac(String mac) {
-        this.mac = mac;
     }
 
     public String getName() {
@@ -51,9 +42,9 @@ public class Device {
     public String toString() {
         return "Device{" +
                 "id='" + id + '\'' +
-                ", mac='" + mac + '\'' +
                 ", name='" + name + '\'' +
                 ", user=" + user +
                 '}';
     }
+
 }
