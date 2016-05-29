@@ -43,42 +43,36 @@ public class MessageServiceImpl implements MessageService {
         logger.info(payload);
 
         String[] topicFields = topic.split("/");
+        String scope = topicFields[0];
 
-        if (topicFields[0].equals("devices")) {
-            if (topicFields[1].equals("register"))
-                handleRegisterDevice(payload);
-            else {
-                String deviceId = topicFields[1];
-                if (topicFields[2].equals("user"))
-                    handleUserLinkedTo(deviceId);
-            }
+        if (scope.equals("devices")) {
+
+            String deviceId = topicFields[1];
+            String action = topicFields[2];
+
+            if (action.equals("register"))
+                handleRegisterDevice(deviceId);
+            else if (action.equals("user"))
+                handleUserLinkedTo(deviceId);
         }
 
-        if (topicFields[0].equals("user")) {
+        if (scope.equals("users")) {
 
             String userId = topicFields[1];
-            logger.info("userId: " + userId);
-            User user = userService.getUser(userId);
-            logger.info("user: " + user);
+            String action = topicFields[2];
 
-            if (user != null) {
-                if (topicFields[2].equals("sample")) {
-                    try {
-                        Sample sample = (new ObjectMapper()).readValue(payload, Sample.class);
-                        sampleService.classify(sample);
-                        sampleService.save(sample);
-                    } catch (IOException e) {
-                        logger.error("Error unmarshalling sample: " + payload);
-                    }
-                } else if (topicFields[2].equals("configure")) {
-                    try {
-                        List<Sample> samples = (new ObjectMapper()).readValue(payload, new TypeReference<List<Sample>>() {});
-                        userService.configure(user, samples);
-                    } catch (IOException e) {
-                        logger.error("Error unmarshalling samples: " + payload);
-                    }
-                }
-            }
+            if (action.equals("configure"))
+                handleConfigureUser(userId, payload);
+
+        }
+
+        if (scope.equals("samples")) {
+
+            String sampleId = topicFields[1];
+            String action = topicFields[2];
+
+            if (action.equals("save"))
+                handleSaveSample(sampleId, payload);
 
         }
 
@@ -89,14 +83,11 @@ public class MessageServiceImpl implements MessageService {
         messageGateway.publish(topic, payload, qos, retained);
     }
 
-    private void handleRegisterDevice(String payload) {
-        try {
-            Device device = objectMapper.readValue(payload, Device.class);
-            device = deviceService.save(device);
-            publish("devices/register/response", "200 OK", MSG_QOS, false);
-        } catch (IOException e) {
-            publish("devices/register/response", e.getLocalizedMessage(), MSG_QOS, false);
-        }
+    private void handleRegisterDevice(String deviceId) {
+        Device device = new Device();
+        device.setId(deviceId);
+        deviceService.save(device);
+        publish("devices/" + deviceId + "/register/response", "200 OK", MSG_QOS, false);
     }
 
     private void handleUserLinkedTo(String deviceId) {
@@ -120,6 +111,35 @@ public class MessageServiceImpl implements MessageService {
         } catch (JsonProcessingException e) {
             logger.error("Error marshalling user: " + user);
             publish(responseTopic, "El dispositivo no tiene usuario vinculado.", MSG_QOS, false);
+        }
+    }
+
+    private void handleConfigureUser(String userId, String payload) {
+        String responseTopic = "users/" + userId + "/configure/response";
+        User user = userService.getUser(userId);
+
+        if (user != null) {
+            try {
+                List<Sample> samples = (new ObjectMapper()).readValue(payload, new TypeReference<List<Sample>>() {});
+                userService.configure(user, samples);
+                publish(responseTopic, "200 OK", MSG_QOS, true);
+            } catch (IOException e) {
+                logger.error("Error unmarshalling samples: " + payload);
+                publish(responseTopic, "Error configurando usuario.", MSG_QOS, false);
+            }
+        } else {
+            logger.info("Intentando configurar usuario no existente.");
+            publish(responseTopic, "Error configurando usuario.", MSG_QOS, false);
+        }
+    }
+
+    private void handleSaveSample(String sampleId, String payload) {
+        try {
+            Sample sample = (new ObjectMapper()).readValue(payload, Sample.class);
+            sampleService.classify(sample);
+            sampleService.save(sample);
+        } catch (IOException e) {
+            logger.error("Error unmarshalling sample: " + payload);
         }
     }
 
