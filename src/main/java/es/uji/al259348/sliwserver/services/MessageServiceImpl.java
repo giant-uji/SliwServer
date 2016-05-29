@@ -84,9 +84,12 @@ public class MessageServiceImpl implements MessageService {
     }
 
     private void handleRegisterDevice(String deviceId) {
-        Device device = new Device();
-        device.setId(deviceId);
-        deviceService.save(device);
+        Device device = deviceService.findOne(deviceId);
+        if (device == null) {
+            device = new Device();
+            device.setId(deviceId);
+            deviceService.save(device);
+        }
         publish("devices/" + deviceId + "/register/response", "200 OK", MSG_QOS, false);
     }
 
