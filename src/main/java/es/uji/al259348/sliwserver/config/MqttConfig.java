@@ -70,7 +70,7 @@ public class MqttConfig {
         adapter.setOutputChannel(mqttInboundChannel());
         adapter.addTopic("devices/register/request");
         adapter.addTopic("devices/+/user/request");
-        adapter.addTopic("user/+/configurar");
+        adapter.addTopic("user/+/configure");
         adapter.addTopic("user/+/sample");
         return adapter;
     }

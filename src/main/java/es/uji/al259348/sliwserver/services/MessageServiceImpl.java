@@ -70,7 +70,7 @@ public class MessageServiceImpl implements MessageService {
                     } catch (IOException e) {
                         logger.error("Error unmarshalling sample: " + payload);
                     }
-                } else {
+                } else if (topicFields[2].equals("configure")) {
                     try {
                         List<Sample> samples = (new ObjectMapper()).readValue(payload, new TypeReference<List<Sample>>() {});
                         userService.configure(user, samples);
