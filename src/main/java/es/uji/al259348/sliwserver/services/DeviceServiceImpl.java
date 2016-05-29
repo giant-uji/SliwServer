@@ -16,4 +16,9 @@ public class DeviceServiceImpl implements DeviceService {
         return deviceRepository.save(device);
     }
 
+    @Override
+    public Device findOne(String deviceId) {
+        return deviceRepository.findOne(deviceId);
+    }
+
 }
