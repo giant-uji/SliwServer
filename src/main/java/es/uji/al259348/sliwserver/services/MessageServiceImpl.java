@@ -33,7 +33,6 @@ public class MessageServiceImpl implements MessageService {
     @Autowired
     private SampleService sampleService;
 
-    private static final String SMARTWATCH_MAC_ADDRESS = "44:d4:e0:fe:f5:3f";
     private static final int MSG_QOS = 2;
 
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -46,50 +45,43 @@ public class MessageServiceImpl implements MessageService {
         String[] topicFields = topic.split("/");
 
         if (topicFields[0].equals("devices")) {
-            if (topicFields[1].equals("register")) {
-                try {
-                    Device device = objectMapper.readValue(payload, Device.class);
-                    device = deviceService.save(device);
-                    publish("devices/register/response", "200 OK", MSG_QOS, false);
-                } catch (IOException e) {
-                    publish("devices/register/response", e.getLocalizedMessage(), MSG_QOS, false);
-                }
+            if (topicFields[1].equals("register"))
+                handleRegisterDevice(payload);
+            else {
+                String deviceId = topicFields[1];
+                if (topicFields[2].equals("user"))
+                    handleUserLinkedTo(deviceId);
             }
         }
 
         if (topicFields[0].equals("user")) {
 
-            if (topicFields[1].equals("linkedTo")) {
-                String deviceId = topicFields[2];
-                handleUserLinkedTo(deviceId);
-            } else {
-                String userId = topicFields[1];
-                logger.info("userId: " + userId);
-                User user = userService.getUser(userId);
-                logger.info("user: " + user);
+            String userId = topicFields[1];
+            logger.info("userId: " + userId);
+            User user = userService.getUser(userId);
+            logger.info("user: " + user);
 
-                if (user != null) {
-                    if (topicFields[2].equals("sample")) {
-                        try {
-                            Sample sample = (new ObjectMapper()).readValue(payload, Sample.class);
-                            sampleService.classify(sample);
-                            sampleService.save(sample);
-                        } catch (IOException e) {
-                            logger.error("Error unmarshalling sample: " + payload);
-                        }
-                    } else {
-                        try {
-                            List<Sample> samples = (new ObjectMapper()).readValue(payload, new TypeReference<List<Sample>>() {});
-                            userService.configure(user, samples);
-                        } catch (IOException e) {
-                            logger.error("Error unmarshalling samples: " + payload);
-                        }
+            if (user != null) {
+                if (topicFields[2].equals("sample")) {
+                    try {
+                        Sample sample = (new ObjectMapper()).readValue(payload, Sample.class);
+                        sampleService.classify(sample);
+                        sampleService.save(sample);
+                    } catch (IOException e) {
+                        logger.error("Error unmarshalling sample: " + payload);
+                    }
+                } else {
+                    try {
+                        List<Sample> samples = (new ObjectMapper()).readValue(payload, new TypeReference<List<Sample>>() {});
+                        userService.configure(user, samples);
+                    } catch (IOException e) {
+                        logger.error("Error unmarshalling samples: " + payload);
                     }
                 }
-
             }
 
         }
+
     }
 
     @Override
@@ -97,8 +89,18 @@ public class MessageServiceImpl implements MessageService {
         messageGateway.publish(topic, payload, qos, retained);
     }
 
-    public void handleUserLinkedTo(String deviceId) {
-        String responseTopic = "user/linkedTo/" + deviceId + "/response";
+    private void handleRegisterDevice(String payload) {
+        try {
+            Device device = objectMapper.readValue(payload, Device.class);
+            device = deviceService.save(device);
+            publish("devices/register/response", "200 OK", MSG_QOS, false);
+        } catch (IOException e) {
+            publish("devices/register/response", e.getLocalizedMessage(), MSG_QOS, false);
+        }
+    }
+
+    private void handleUserLinkedTo(String deviceId) {
+        String responseTopic = "devices/" + deviceId + "/user/response";
         User user = null;
         try {
             user = userService.getUserLinkedTo(deviceId);
