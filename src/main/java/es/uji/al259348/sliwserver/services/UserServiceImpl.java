@@ -47,16 +47,27 @@ public class UserServiceImpl implements UserService {
     @Override
     public void configure(User user, List<Sample> samples) {
         samples.forEach(sampleRepository::save);
+        buildClassifiers(user.getId());
+    }
 
-        List<String> bssids = getBssids(samples);
-        user.setBssids(bssids);
+    @Override
+    public void buildClassifiers(String userId) {
+        User user = userRepository.findOne(userId);
+        if (user != null) {
 
-        List<Classifier> classifiers = mlService.buildClassifiers(user, samples);
-        user.setClassifiers(MLServiceImpl.toBase64(classifiers));
+            List<Sample> samples = sampleRepository.findByUserIdAndValid(userId, true);
 
-        user.setConfigured(true);
+            List<String> bssids = getBssids(samples);
+            user.setBssids(bssids);
 
-        userRepository.save(user);
+            List<Classifier> classifiers = mlService.buildClassifiers(user, samples);
+            user.setClassifiers(MLServiceImpl.toBase64(classifiers));
+
+            user.setConfigured(true);
+
+            userRepository.save(user);
+
+        }
     }
 
     private static List<String> getBssids(List<Sample> samples) {

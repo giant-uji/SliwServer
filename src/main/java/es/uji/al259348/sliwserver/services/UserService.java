@@ -12,4 +12,5 @@ public interface UserService {
     User getUserLinkedTo(String mac) throws NoSuchDeviceException;
 
     void configure(User user, List<Sample> samples);
+    void buildClassifiers(String userId);
 }
