@@ -139,10 +139,21 @@ public class MessageServiceImpl implements MessageService {
     private void handleSaveSample(String sampleId, String payload) {
         String responseTopic = "samples/" + sampleId + "/save/response";
         try {
+
             Sample sample = (new ObjectMapper()).readValue(payload, Sample.class);
-            sampleService.classify(sample);
+
+            if (!sample.isValid())
+                sampleService.classify(sample);
+
             sampleService.save(sample);
-            publish(responseTopic, "200 OK", MSG_QOS, false);
+
+            if (sample.isValid()) {
+                String userId = sample.getUserId();
+                userService.buildClassifiers(userId);
+            }
+
+            publish(responseTopic, sample.getLocation(), MSG_QOS, false);
+
         } catch (IOException e) {
             logger.error("Error unmarshalling sample: " + payload);
         }
