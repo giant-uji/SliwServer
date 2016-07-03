@@ -10,6 +10,10 @@ public class Location {
 
     }
 
+    public Location(String name) {
+        this.name = name;
+    }
+
     public String getName() {
         return name;
     }
@@ -32,6 +36,15 @@ public class Location {
 
     public void setCheckMsg(String checkMsg) {
         this.checkMsg = checkMsg;
+    }
+
+    @Override
+    public String toString() {
+        return "Location{" +
+                "name='" + name + '\'' +
+                ", configMsg='" + configMsg + '\'' +
+                ", checkMsg='" + checkMsg + '\'' +
+                '}';
     }
 
 }
