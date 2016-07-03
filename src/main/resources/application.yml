@@ -1,5 +1,5 @@
 mqtt:
-  uri: "tcp://0.0.0.0:61613"
+  uri: "tcp://apache-apollo:61613"
   username: "admin"
   password: "password"
   clientId: "SliwServer"
@@ -7,4 +7,4 @@ spring:
   data:
     elasticsearch:
       cluster-name: "elasticsearch"
-      cluster-nodes: "127.0.0.1:9300"
+      cluster-nodes: "elasticsearch:9300"
