@@ -123,7 +123,7 @@ public class MLServiceImpl implements MLService {
         return predictedClass.intValue();
     }
 
-    private Map<String,Integer> getBSSIDLevelMap(Sample sample) {
+    public Map<String,Integer> getBSSIDLevelMap(Sample sample) {
         return sample.getScanResults().stream()
                 .collect(Collectors.toMap(
                         wifiScanResult -> wifiScanResult.BSSID,
