@@ -34,8 +34,8 @@ import static org.junit.Assert.*;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(Main.class)
 public class UserServiceImplTest {
-    private String training = "b1346e9d-c44e-4a47-9de2-025b2ffb4f45";
-    private String test = "475209b8-42c2-4e3a-8bd6-0df4b9d145e6";
+    private String training = "fedd02bf-215a-4bc2-8739-cf787822733e";
+    private String test = "cb26c689-118f-4281-ad1e-80948b4a7ca7";
 
     @Autowired
     UserService userService;
@@ -93,7 +93,7 @@ public class UserServiceImplTest {
 
     }
 
-//    @Test
+    @Test
     public void matrizDeConfusion() {
         User user = userService.getUser(training);
         List<Classifier> classifiers = MLServiceImpl.fromBase64(user.getClassifiers());
@@ -158,11 +158,11 @@ public class UserServiceImplTest {
         }
     }
 
-//    @Test
+    @Test
     public void matrizConfusionTotal() {
         User user = userService.getUser(training);
         // La siguiente línea es un hack porque me despisté con el nombre de la etiqueta y puse Seminairo
-        user.getLocations().get(user.getLocations().size()-2).setName("Despacho");
+//        user.getLocations().get(user.getLocations().size()-2).setName("Despacho");
 
         Instances instances = new TrainingSetBuilder()
                 .setAttributes(user.getBssids())
