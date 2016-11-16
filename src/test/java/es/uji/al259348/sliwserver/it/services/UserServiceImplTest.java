@@ -136,6 +136,7 @@ public class UserServiceImplTest {
                 Evaluation evaluation= new Evaluation(instances);
                 evaluation.crossValidateModel(classifier, instances, folds, rand);
                 System.out.println(evaluation.toMatrixString());
+                System.out.println(evaluation.toSummaryString());
             }
         } catch (Exception e) {
             e.printStackTrace();
