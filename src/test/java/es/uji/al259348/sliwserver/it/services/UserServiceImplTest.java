@@ -34,8 +34,8 @@ import static org.junit.Assert.*;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(Main.class)
 public class UserServiceImplTest {
-    private String training = "b1346e9d-c44e-4a47-9de2-025b2ffb4f45";
-    private String test = "475209b8-42c2-4e3a-8bd6-0df4b9d145e6";
+    private String training = "81e519b6-f57b-4432-a8db-2d256d1cd342";
+    private String test = "81e519b6-f57b-4432-a8db-2d256d1cd342";
 
     @Autowired
     UserService userService;
@@ -66,7 +66,7 @@ public class UserServiceImplTest {
                 .forEach(System.out::println);
     }
 
-    @Test
+//    @Test
     public void numeroWAPs() {
         User user = userService.getUser(training);
         System.out.println(user.getBssids().stream()
@@ -93,7 +93,7 @@ public class UserServiceImplTest {
 
     }
 
-//    @Test
+    @Test
     public void matrizDeConfusion() {
         User user = userService.getUser(training);
         List<Classifier> classifiers = MLServiceImpl.fromBase64(user.getClassifiers());

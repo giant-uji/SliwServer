@@ -93,9 +93,25 @@ public class MLServiceImpl implements MLService {
         return trainingSet.classAttribute().value(predictedClass);
     }
 
+    private boolean classifierOK(Classifier classifier) {
+        String name = classifier.getClass().getName();
+        System.out.println(name);
+        return true;
+    }
+
     private int classify(List<Classifier> classifiers, Instance instance) {
 
+//        List<Double> predictedClasses = classifiers.stream()
+//                .map(classifier -> {
+//                    try {
+//                        return classifier.classifyInstance(instance);
+//                    } catch (Exception e) {
+//                        return -1.0;
+//                    }
+//                }).collect(Collectors.toList());
+
         List<Double> predictedClasses = classifiers.stream()
+//                .filter(classifier -> classifierOK(classifier))
                 .map(classifier -> {
                     try {
                         return classifier.classifyInstance(instance);
