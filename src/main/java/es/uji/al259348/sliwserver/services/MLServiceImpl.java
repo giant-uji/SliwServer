@@ -104,21 +104,23 @@ public class MLServiceImpl implements MLService {
                     }
                 }).collect(Collectors.toList());
 
-        System.out.println("Resultados de clasificar muestra:");
-        System.out.println(predictedClasses);
+//        System.out.println("Resultados de clasificar muestra:");
+//        System.out.println(predictedClasses);
 
         Map<Double, Long> predictedClassOcurrencesMap = predictedClasses.stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-        System.out.println("Mapa de ocurrencias:");
-        System.out.println(predictedClassOcurrencesMap);
+//        System.out.println("Mapa de ocurrencias:");
+//        System.out.println(predictedClassOcurrencesMap);
 
         Double predictedClass = predictedClassOcurrencesMap.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .get().getKey();
 
-        System.out.println("Resultado final:");
-        System.out.println(predictedClass);
+//        System.out.println("Resultado final:");
+//        System.out.println(predictedClass);
+
+//        System.out.println("Real: " + instance.classValue());
 
         return predictedClass.intValue();
     }
