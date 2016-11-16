@@ -66,7 +66,7 @@ public class UserServiceImplTest {
                 .forEach(System.out::println);
     }
 
-    @Test
+//    @Test
     public void numeroWAPs() {
         User user = userService.getUser(training);
         System.out.println(user.getBssids().stream()
