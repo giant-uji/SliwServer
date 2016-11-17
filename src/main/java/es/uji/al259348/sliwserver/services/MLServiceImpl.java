@@ -95,8 +95,9 @@ public class MLServiceImpl implements MLService {
 
     private boolean classifierOK(Classifier classifier) {
         String name = classifier.getClass().getName();
-        System.out.println(name);
-        return true;
+        if(name.contains("RandomForest") || name.contains("BayesNet"))
+            return true;
+        else return false;
     }
 
     private int classify(List<Classifier> classifiers, Instance instance) {
@@ -111,7 +112,7 @@ public class MLServiceImpl implements MLService {
 //                }).collect(Collectors.toList());
 
         List<Double> predictedClasses = classifiers.stream()
-//                .filter(classifier -> classifierOK(classifier))
+                .filter(classifier -> classifierOK(classifier))
                 .map(classifier -> {
                     try {
                         return classifier.classifyInstance(instance);
