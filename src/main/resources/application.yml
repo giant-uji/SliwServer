@@ -1,6 +1,6 @@
 mqtt:
-#  uri: "tcp://apache-apollo:61613"
-  uri: "tcp://estudioactividad.uji.es:61613"
+  uri: "tcp://apache-apollo:61613"
+#  uri: "tcp://estudioactividad.uji.es:61613"
 #  uri: "tcp://192.168.43.88:61613"
   username: "admin"
   password: "password"
