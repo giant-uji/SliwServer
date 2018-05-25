@@ -12,7 +12,6 @@ import weka.classifiers.functions.SMO;
 import weka.classifiers.trees.J48;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Attribute;
-import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -23,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class MLServiceImpl implements MLService {
+
+    private static final String UNKNOWN_LOCATION = "Localización desconocida";
 
     @Override
     public List<Classifier> buildClassifiers(User user, List<Sample> validSamples) {
@@ -61,6 +62,9 @@ public class MLServiceImpl implements MLService {
 
     @Override
     public String classify(User user, Sample sample) {
+        if (sample.getScanResults().size() == 0) {
+            return UNKNOWN_LOCATION;
+        }
 
         Instances trainingSet = new TrainingSetBuilder()
                 .setAttributes(user.getBssids())
@@ -75,10 +79,14 @@ public class MLServiceImpl implements MLService {
 
         Instance instance = new Instance(trainingSet.numAttributes());
 
+        int hits = 0;
         for (Enumeration e = trainingSet.enumerateAttributes(); e.hasMoreElements();) {
             Attribute attribute = (Attribute) e.nextElement();
             String bssid = attribute.name();
             int level = (BSSIDLevelMap.containsKey(bssid)) ? BSSIDLevelMap.get(bssid) : 0;
+            if (level < 0) {
+                hits++;
+            }
             instance.setValue(attribute, level);
         }
 
@@ -89,13 +97,17 @@ public class MLServiceImpl implements MLService {
         trainingSet.add(instance);
 
         int predictedClass = classify(fromBase64(user.getClassifiers()), instance);
+        String location = UNKNOWN_LOCATION;
+        if (predictedClass >= 0 && hits > 0) {
+            location = trainingSet.classAttribute().value(predictedClass);
+        }
 
-        return trainingSet.classAttribute().value(predictedClass);
+        return location;
     }
 
     private boolean classifierOK(Classifier classifier) {
         String name = classifier.getClass().getName();
-        if(name.contains("RandomForest") || name.contains("BayesNet"))
+        if (name.contains("RandomForest") || name.contains("BayesNet"))
             return true;
         else return false;
     }
@@ -226,5 +238,4 @@ public class MLServiceImpl implements MLService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-
 }
