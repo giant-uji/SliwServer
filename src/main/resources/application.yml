@@ -2,7 +2,7 @@ mqtt:
   uri: "tcp://apache-apollo:61613"
   username: "admin"
   password: "password"
-  clientId: "SliwServer"
+  clientId: "SliwServerControl"
 spring:
   data:
     elasticsearch:
